@@ -1,6 +1,12 @@
-node_modules/
-bower_components/
-*.log
-
-build/
-dist/
+.grunt
+# Nodejs packages
+node_modules
+# Bower packages
+bower_components
+# Temporary directory
+.tmp
+# Build directory
+dist
+#sftp-deploy
+.ftppass
+sftpCache.json

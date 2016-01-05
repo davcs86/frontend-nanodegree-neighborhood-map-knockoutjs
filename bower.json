@@ -1,0 +1,31 @@
+{
+  "name": "frontend-nanodegree-neighborhood-map-knockoutjs",
+  "description": "Project #5-1 for Udacity's frontend web developer program by davcs86 (KnockoutJS version)",
+  "main": "app/index.html",
+  "authors": [
+    "David Castillo (davcs86@gmail.com)"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/davcs86/frontend-nanodegree-neighborhood-map-knockoutjs",
+  "moduleType": [],
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "modernizr": "~2.8.3",
+    "knockout": "~3.4.0",
+    "polymer": "Polymer/polymer#^1.2.0",
+    "google-map": "GoogleWebComponents/google-map#~1.1.7",
+    "material-design-lite": "~1.0.6",
+    "jquery": "~2.1.4",
+    "lodash": "~3.10.1"
+  },
+  "devDependencies": {
+    "google-map": "GoogleWebComponents/google-map#~1.1.7"
+  }
+}
