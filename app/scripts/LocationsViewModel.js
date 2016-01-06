@@ -70,7 +70,7 @@ var LocationsViewModel = function() {
      */
     vm.parseGoogleLocations = function(googleResultsArray) {
         // clean the array of locations returned by google places api
-        vm.visibleLocations.removeAll();
+        var locations = [];
         _.forEach(googleResultsArray, function(n) {
             var place_id = n.place_id,
                 locationSimplified = _.trim((_.words(n.vicinity, /[^,]+/g)).pop()),
@@ -80,7 +80,7 @@ var LocationsViewModel = function() {
                     foursquare: null
                 }
             // store the place_id of this result
-            vm.visibleLocations.push(place_id);
+            locations.push(place_id);
 
             // resolve photos urls
             if (_.isArray(n.photos) && n.photos.length > 0) {
@@ -121,6 +121,7 @@ var LocationsViewModel = function() {
                     vm.processFoursquareResponse);
             }
         });
+        vm.visibleLocations(locations);
         // Save the cache to localStorage
         LocationsModel.save();
     }
@@ -206,10 +207,11 @@ var LocationsViewModel = function() {
      * Load the locations from cache (LocationsModel.items).
      */
     vm.loadAllLocations = function() {
-        vm.visibleLocations.removeAll();
+        var locations = [];
         _.forIn(LocationsModel.items, function(n, key) {
-            vm.visibleLocations.push(key);
+            locations.push(key);
         });
+        vm.visibleLocations(locations);
     }
     /**
      * Select (saves its identifier) the marker of a item,
