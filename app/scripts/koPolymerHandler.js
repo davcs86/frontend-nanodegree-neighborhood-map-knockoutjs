@@ -11,7 +11,6 @@ ko.bindingHandlers.polymerBind = {
         var valueUnwrapped = ko.unwrap(value);
 
         element.set(valueUnwrapped.property, valueUnwrapped.propertyValue());
-        element.set(valueUnwrapped.property2, valueUnwrapped.property2Value());
     },
     update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
         // This will be called once when the binding is first applied to an element,
@@ -24,6 +23,5 @@ ko.bindingHandlers.polymerBind = {
         var valueUnwrapped = ko.unwrap(value);
 
         element.set(valueUnwrapped.property, valueUnwrapped.propertyValue());
-        element.set(valueUnwrapped.property2, valueUnwrapped.property2Value());
     }
 };

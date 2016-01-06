@@ -24,6 +24,9 @@ div.mdl-navigation__link {
     cursor: pointer;
     padding: 10px 16px !important;
 }
+div.mdl-navigation__link.active {
+    background-color: #CCC;
+}
 div.mdl-navigation__link > .inner {
     display: flex;
     justify-content: flex-start;
@@ -51,4 +54,68 @@ div.mdl-navigation__link .list-item-text * {
     font-size: 13px;
     margin: 0;
     line-height: 18px;
+}
+.hidden {
+    display: none;
+}
+// Styles for infowindow
+
+#infowindow * {
+    line-height: normal !important;
+}
+
+#infowindow {
+    overflow-x: hidden;
+}
+
+#infowindow h5 {
+    margin: 0;
+    padding: 0;
+    font-size: 18px;
+}
+#infowindow h6 {
+    margin: 0;
+    padding: 0;
+    font-size: 13px;
+    font-weigth: bold;
+}
+
+.md-padding {
+    padding: 8px;
+}
+@media (min-width: 960px) {
+    .md-padding {
+        padding: 16px;
+    }
+}
+.no-padding-top {
+    padding-top: 0;
+}
+.no-padding-bottom {
+    padding-bottom: 0;
+}
+.no-margin-bottom {
+    margin-bottom: 0;
+}
+.img-iw {
+    width: 100%;
+    height: auto;
+}
+.my-chips {
+    margin: 2px 4px;
+    padding: 2px 8px;
+    border-radius: 14px;
+    background-color: #ECECEC;
+    float: left;
+}
+.my-chips-container {
+    margin-top: 12px;
+}
+.my-chips-container:after {
+    visibility: hidden;
+    display: block;
+    font-size: 0;
+    content: " ";
+    clear: both;
+    height: 0;
 }

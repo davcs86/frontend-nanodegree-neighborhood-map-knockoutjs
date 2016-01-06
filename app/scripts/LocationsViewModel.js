@@ -1,13 +1,47 @@
-/*eslint no-unused-vars: [2, { "args": "all", "argsIgnorePattern": "n", "varsIgnorePattern": "LocationsViewModel" }]*/
+/*eslint no-unused-vars: [2, { "args": "all", "argsIgnorePattern": "n|jqxhr", "varsIgnorePattern": "LocationsViewModel" }]*/
 /*global LocationsModel,LocationsFactory,ko,google,_*/
 var LocationsViewModel = function() {
     var vm = this;
+    // Reference to the map
     vm.map = null;
+    // and infowindow object
+    vm.infowindow = null;
+    /**
+     * Observable variables:
+     * - selectedMarkerId: stores the place_id of the location selected
+     * - filterQuery: the query from the input and used to filter
+     * - filterByName: boolean binded to the checkbox filter by name
+     * - filterByVicinity: boolean binded to the checkbox filter by address
+     * - visibleLocations: array of locations returned by google places api
+     **/
     vm.selectedMarkerId = ko.observable(false);
     vm.filterQuery = ko.observable('');
     vm.filterByName = ko.observable(true);
     vm.filterByVicinity = ko.observable(false);
     vm.visibleLocations = ko.observableArray([]);
+
+    /**
+     * Returns a location (with data from all apis) from the dictionary LocationsModel
+     * based on its place_id from the Google Places API
+     * @param {string} place_id - Google Places API identifier
+     */
+    vm.getLocItem = function(place_id){
+        return LocationsModel.items[place_id];
+    }
+    /**
+     * Returns the current selected item (it's calculated because needs to detect
+     * any change and update the infowindow)
+     */
+    vm.getSelItem = ko.computed(function() {
+        var n = vm.selectedMarkerId(),
+            item = vm.getLocItem(n);
+        return item;
+    });
+    /**
+     * Filter the visibleLocations array based on the query from the input
+     * also by name and/or by address.
+     * It's calculated becuase needs to update the listview and the markers.
+     */
     vm.filteredLocations = ko.computed(function() {
         var resolved = [];
         _.forEach(vm.visibleLocations(), function(n){
@@ -25,10 +59,20 @@ var LocationsViewModel = function() {
         });
         return resolved;
     });
+    /**
+     * For each result returned by the Google Places API, store it in the vm.mapLocations
+     * variable to make it usable by the listview and the map markers.
+     * But before, it resolves the values for location.google.photos[0].getUrl40,
+     * location.google.photos[0].getUrl280, location.google.geometry.location.latNum
+     * and location.google.geometry.location.lngNum in order to have the raw values
+     * instead of functions that can't be stored in a json string.
+     * Also, launch the async calls to Yelp and Foursquare APIs.
+     * @param {object} googleResultsArray - Array with the results from the Google Places API
+     */
     vm.parseGoogleLocations = function(googleResultsArray) {
+        // clean the array of locations returned by google places api
         vm.visibleLocations.removeAll();
         _.forEach(googleResultsArray, function(n) {
-            // if exist in cache, simply add the reference to array
             var place_id = n.place_id,
                 locationSimplified = _.trim((_.words(n.vicinity, /[^,]+/g)).pop()),
                 newLocationObj = {
@@ -36,16 +80,17 @@ var LocationsViewModel = function() {
                     yelp: null,
                     foursquare: null
                 }
+            // store the place_id of this result
             vm.visibleLocations.push(place_id);
 
             // resolve photos urls
-            if (_.isArray(newLocationObj.google.photos) && newLocationObj.google.photos.length > 0) {
-                newLocationObj.google.photos[0].getUrl40 = newLocationObj.google.photos[0].getUrl({maxHeight:40,maxWidth:40});
-                newLocationObj.google.photos[0].getUrl280 = newLocationObj.google.photos[0].getUrl({maxHeight:140,maxWidth: 280});
+            if (_.isArray(n.photos) && n.photos.length > 0) {
+                newLocationObj.google.photos[0].getUrl40 = n.photos[0].getUrl({maxHeight:40,maxWidth:40});
+                newLocationObj.google.photos[0].getUrl280 = n.photos[0].getUrl({maxHeight:140,maxWidth: 280});
             }
             // resolve location's values
-            newLocationObj.google.geometry.location.latNum = newLocationObj.google.geometry.location.lat();
-            newLocationObj.google.geometry.location.lngNum = newLocationObj.google.geometry.location.lng();
+            newLocationObj.google.geometry.location.latNum = n.geometry.location.lat();
+            newLocationObj.google.geometry.location.lngNum = n.geometry.location.lng();
 
             if (_.isUndefined(LocationsModel.items[place_id])) {
                 // store in the cache
@@ -54,9 +99,9 @@ var LocationsViewModel = function() {
                 // update google cache
                 LocationsModel.items[place_id].google = newLocationObj.google;
             }
-
+            // if the cache doesn't have this data
             if (_.isNull(LocationsModel.items[place_id].yelp)) {
-                // retrieve yelp info
+                // then retrieve it from foursquare API
                 LocationsFactory.searchYelpBusiness(
                     newLocationObj.google.place_id,
                     newLocationObj.google.name,
@@ -65,8 +110,9 @@ var LocationsViewModel = function() {
                     locationSimplified,
                     vm.processYelpResponse);
             }
+            // if the cache doesn't have this data
             if (_.isNull(LocationsModel.items[place_id].foursquare)) {
-                // retrieve foursquare info
+                // then retrieve it from foursquare API
                 LocationsFactory.searchFoursquareBusiness(
                     newLocationObj.google.place_id,
                     newLocationObj.google.name,
@@ -76,6 +122,8 @@ var LocationsViewModel = function() {
                     vm.processFoursquareResponse);
             }
         });
+        // Save the cache to localStorage
+        LocationsModel.save();
     }
     /**
      * If Yelp API returned a value, store it in cache (vm.allLocations)
@@ -84,10 +132,11 @@ var LocationsViewModel = function() {
      */
     vm.processYelpResponse = function(place_id, response) {
         // if returned a value
-        //console.log(response);
-        if (!_.isUndefined(response) && response.businesses.length > 0) {
+        if (!_.isUndefined(response) && !_.isUndefined(response.businesses) && response.businesses.length > 0) {
             // store it in cache (LocationsModel.items)
             LocationsModel.items[place_id].yelp = response.businesses[0];
+            // Save the cache to localStorage
+            LocationsModel.save();
         }
     }
     /**
@@ -97,30 +146,47 @@ var LocationsViewModel = function() {
      */
     vm.processFoursquareResponse = function(place_id, response) {
         // if returned a value
-        //console.log(response);
-        if (!_.isUndefined(response) && response.data.response.venues.length > 0) {
+        if (!_.isUndefined(response) && !_.isUndefined(response.venues) && response.venues.length > 0) {
             // store it in cache (LocationsModel.items)
-            LocationsModel.items[place_id].foursquare = response.data.response.venues[0];
+            LocationsModel.items[place_id].foursquare = response.venues[0];
+            // Save the cache to localStorage
+            LocationsModel.save();
         }
     }
+    /**
+     * Method called when the map initializes.
+     * It stores the reference to the map in a variable (vm.map),
+     * also sets the event listeners to update the locations after user drags the map
+     * or when changes of zoom level.
+     * Also, creates the shared InfoWindow for all the markers
+     */
     vm.initMap = function(){
         // Stores the map in the scope.
         vm.map = $('#locationsMapElement')[0].map;
+        // Add event listeners for dragend and zoom_changed for the map
         $('#locationsMapElement')[0].addEventListener('google-map-dragend', vm.updateLocations);
         google.maps.event.addListener(vm.map, 'zoom_changed', vm.updateLocations);
+        // Sets the infowindow
+        vm.infowindow = new google.maps.InfoWindow({
+            content: $('#infowindow')[0],
+            maxWidth: 220
+        });
         /**
          * Waits 2s before load the locations (tries to ensure that functions like map.getCenter() and map.getBounds() return a value)
          */
         setTimeout(function(){
+            // update the locations
             vm.updateLocations();
-        }, 2000);
+        }, 1000);
     }
+    /**
+     * Load the locations from Google Places API, or from the cache when API fails.
+     */
     vm.updateLocations = function() {
         // Get the map bounds
         var bounds = vm.map.getBounds();
-        //vm.showLoadingBar();
         // De-select the marker
-        //vm.selectItem(null);
+        vm.selectItem(null);
         if (!_.isUndefined(bounds)) {
             // If the map has bounds, call Google Places API
             LocationsFactory.getGoogleNearbyPlaces(
@@ -131,23 +197,51 @@ var LocationsViewModel = function() {
         } else {
             // Load the locations from the cache (LocationsModel.items)
             vm.loadAllLocations();
-            // hide the loading bar
-            //vm.hideLoadingBar();
         }
     }
+    /**
+     * Load the locations from cache (LocationsModel.items).
+     */
     vm.loadAllLocations = function() {
-        // load locations from cache (LocationsModel.items)
         vm.visibleLocations.removeAll();
         _.forIn(LocationsModel.items, function(n, key) {
             vm.visibleLocations.push(key);
         });
     }
-    vm.getLocItem = function(place_id){
-        return LocationsModel.items[place_id];
-    }
+    /**
+     * Select (saves its identifier) the marker of a item,
+     * sets the marker animation and if apply, open/hide the
+     * infowindow. Also removes the selection from the listview.
+     * @param {string} place_id - Google Places API identifier
+     */
     vm.selectItem = function(place_id) {
         vm.selectedMarkerId(place_id);
+        // remove .selected from the list items
+        $('div[id^=LL_]').removeClass('active');
+        // stop all the animations
+        $('google-map-marker[id^=MM_]').each(function( index ) {
+            $(this)[0].set('animation', null);
+        });
+        if (_.isString(place_id) && !_.indexOf(vm.visibleLocations,place_id)>=0) {
+            // mark .selected the list item
+            $('div#LL_'+place_id).addClass('active');
+            // start the selected marker animation
+            var markerDOM = $('google-map-marker#MM_'+place_id)[0];
+            if (!_.isUndefined(markerDOM)){
+                markerDOM.set('animation','BOUNCE');
+                // open infowindow attached to the selected marker
+                vm.infowindow.open(vm.map, markerDOM.marker);
+            }
+            // in case the sidenav is open in a small screen, simulate a click on the darker area.
+            $('.mdl-layout__obfuscator.is-visible').click();
+        } else {
+            // close infowindow
+            vm.infowindow.close();
+        }
     }
+    /**
+     * Handles the click over a list item.
+     */
     vm.selectListItem = function(data){
         vm.selectItem(data.google.place_id);
     }
@@ -158,13 +252,22 @@ var koLVM = new LocationsViewModel();
 jQuery(function($){
     ko.applyBindings(koLVM);
     $('body').on('google-map-ready','#locationsMapElement', function(ev) {
-        ev.stopPropagation();
         // when map is ready, init the view model
         koLVM.initMap();
-    });
-    $('body').on('google-map-marker-mousedown','*', function(ev) {
         ev.stopPropagation();
-        //console.log(this);
-        koLVM.selectItem(this.id);
     });
-})
+    $('body').on('google-map-marker-click','*', function(ev) {
+        // when user clicks on the map's markers.
+        koLVM.selectItem(this.id.replace('MM_',''));
+        ev.stopPropagation();
+    });
+    $('body').on('google-map-marker-close','*', function(ev) {
+        // De-select the marker when the infowindow is closed.
+        koLVM.selectItem(null);
+        ev.stopPropagation();
+    });
+    $(document).ajaxSend(function( event, jqxhr, settings ) {
+        // Trick to delete an extra parameter in the url
+        settings.url = settings.url.replace(/&callback=yelp_[^&]+/, '');
+    });
+});

@@ -25,22 +25,22 @@ module.exports = function (grunt) {
         watch: {
             bower: {
                 files: ['bower.json'],
-                tasks: ['wiredep']
+                tasks: []//'wiredep']
             },
             js: {
-                files: ['<%= config.app %>/scripts/{,*/}*.js'],
-                tasks: ['eslint']
+                files: ['<%= config.app %>/scripts/**/*.js'],
+                tasks: ['default']//'eslint']
             },
             gruntfile: {
                 files: ['Gruntfile.js']
             },
             sass: {
-                files: ['<%= config.app %>/styles/{,*/}*.{scss,sass}'],
-                tasks: ['sass', 'postcss']
+                files: ['<%= config.app %>/styles/**/*.{scss,sass}'],
+                tasks: ['default']//'sass', 'postcss']
             },
             styles: {
-                files: ['<%= config.app %>/styles/{,*/}*.css'],
-                tasks: ['newer:copy:styles', 'postcss']
+                files: ['<%= config.app %>/styles/**/*.css'],
+                tasks: ['default']//'newer:copy:styles', 'postcss']
             }
         },
 

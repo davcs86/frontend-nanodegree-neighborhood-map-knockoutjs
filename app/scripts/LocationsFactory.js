@@ -3,7 +3,7 @@
 var LocationsFactory = {
     /**
      * Search for places based on the center and the boundaries of the map,
-     * in the Google Places API
+     * in the Google Places API.
      * Returns a promise, which is resolved when the API call returns a response.
      * @param {object} map - Map returned from ngMap
      * @param {object} bounds - Bounds of the map
@@ -29,13 +29,13 @@ var LocationsFactory = {
     },
     /**
      * Search for a yelp business that matches with the google place result.
-     * Returns a promise, which is resolved by a custom callback created
-     * directly in the window object.
      * @param {string} placeId - Google Places API identifier
      * @param {string} placeName - Name of the location
      * @param {string} placeLocLat - Latitude of the location
      * @param {string} placeLocLng - Longitude of the location
      * @param {string} placeLocation - City where the location is
+     * @param {function} callbackSuccess - Callback to be executed when the request was succesful
+     * @param {function} callbackSuccess - Callback to be executed when the request failed
      */
     searchYelpBusiness: function(placeId, placeName, placeLocLat, placeLocLng, placeLocation, callbackSuccess, callbackError) {
         var c = (new Date()).getTime(), // milliseconds to name the custom callback
@@ -46,6 +46,7 @@ var LocationsFactory = {
                 },
                 signature_method: 'HMAC-SHA1'
             }),
+            callbackName = 'yelp_callback_'+(c+placeId).replace(/[^0-9A-Za-z_]/g,'_'), // a valid jsonp callback name
             request = {                 // parameters of the request
                 url: 'http://api.yelp.com/v2/search',
                 method: 'GET',
@@ -54,27 +55,27 @@ var LocationsFactory = {
                     term: placeName,
                     cll:  placeLocLat+','+placeLocLng,
                     location: placeLocation,
-                    callback: 'yelp_callback_'+c+placeId
+                    callback: callbackName
                 }
             },
             oauthToken = {              // yelp token
                 public: 'v3TxAKHJ7jxke9vbVI-CjBnOfVP2f3DZ',
                 secret: 'JWuqPhtTUFsc3k1H0cN5LREpBtA'
             }
-        // Create a timeout of 10 seconds to destroy the callback
-        // and reject the promise
+        // Create a timeout of 10 seconds to destroy the callback function
+        // and execute the callbackError
         var timeout = setTimeout(function(){
-            delete window['yelp_callback_'+c+placeId];
+            delete window[callbackName];
             if(_.isFunction(callbackError)) {
                 callbackError();
             }
         }, 10000);
         // The custom callback to receive the jsonp response from the yelp API
-        window['yelp_callback_'+c+placeId] = function (data) {
+        window[callbackName] = function (data) {
             // Cancel the timeout
             clearTimeout(timeout);
             // destroy the callback
-            delete window['yelp_callback_'+c+placeId];
+            delete window[callbackName];
             // execute the callback with the response
             if(_.isFunction(callbackSuccess) && !_.isUndefined(data)) {
                 callbackSuccess(placeId, data);
@@ -82,15 +83,24 @@ var LocationsFactory = {
                 callbackError();
             }
         };
-        $.getJSON(request.url, oauth.authorize(request, oauthToken));
+        $.ajax({
+            url: 'http://api.yelp.com/v2/search',
+            dataType: 'jsonp',
+            jsonpCallback: callbackName,
+            jsonp: 'callback',
+            cache: true,
+            data: oauth.authorize(request, oauthToken)
+        });
     },
     /**
      * Search for a foursquare business that matches with the google place result.
-     * Returns a jsonp promise.
+     * @param {string} placeId - Google Places API identifier
      * @param {string} placeName - Name of the location
      * @param {string} placeLocLat - Latitude of the location
      * @param {string} placeLocLng - Longitude of the location
      * @param {string} placeLocation - City where the location is
+     * @param {function} callbackSuccess - Callback to be executed when the request was succesful
+     * @param {function} callbackSuccess - Callback to be executed when the request failed
      */
     searchFoursquareBusiness: function(placeId, placeName, placeLocLat, placeLocLng, placeLocation, callbackSuccess, callbackError) {
         var c = (new Date()).getTime(), // milliseconds to name the custom callback
@@ -100,24 +110,24 @@ var LocationsFactory = {
                 v: 20130815,
                 query: placeName,
                 ll: placeLocLat+','+placeLocLng,
-                callback: 'foursquare_callback_'+c+placeId,
                 near: placeLocation,
                 limit: 1
-            }
-        // Create a timeout of 10 seconds to destroy the callback
-        // and reject the promise
+            },
+            callbackName = 'foursquare_callback_'+(c+placeId).replace(/[^0-9A-Za-z_]/g,'_');  // a valid jsonp callback name
+        // Create a timeout of 10 seconds to destroy the callback function
+        // and execute the callbackError
         var timeout = setTimeout(function(){
-            delete window['foursquare_callback_'+c+placeId];
+            delete window[callbackName];
             if(_.isFunction(callbackError)) {
                 callbackError();
             }
         }, 10000);
-        // The custom callback to receive the jsonp response from the yelp API
-        window['foursquare_callback_'+c+placeId] = function (data) {
+        // The custom callback to receive the jsonp response from the foursquare API
+        window[callbackName] = function (data) {
             // Cancel the timeout
             clearTimeout(timeout);
             // destroy the callback
-            delete window['foursquare_callback_'+c+placeId];
+            delete window[callbackName];
             // execute the callback with the response
             if(_.isFunction(callbackSuccess) && !_.isUndefined(data)) {
                 callbackSuccess(placeId, data);
@@ -125,6 +135,13 @@ var LocationsFactory = {
                 callbackError();
             }
         };
-        $.getJSON('https://api.foursquare.com/v2/venues/search', params);
+
+        $.ajax({
+            url: 'https://api.foursquare.com/v2/venues/search',
+            dataType: 'jsonp',
+            jsonpCallback: callbackName,
+            jsonp: 'callback',
+            data: params
+        });
     }
 };
