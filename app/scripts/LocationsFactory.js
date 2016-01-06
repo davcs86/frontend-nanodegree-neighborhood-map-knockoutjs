@@ -38,7 +38,7 @@ var LocationsFactory = {
      * @param {function} callbackSuccess - Callback to be executed when the request failed
      */
     searchYelpBusiness: function(placeId, placeName, placeLocLat, placeLocLng, placeLocation, callbackSuccess, callbackError) {
-        var c = (new Date()).getTime(), // milliseconds to name the custom callback
+        var c = (new Date()).getTime(), // milliseconds  to name the custom callback
             oauth = OAuth({             // OAuth object with the yelp keys
                 consumer: {
                     public: '-0OmC9HI7oxDSZtNxu8sCQ',
@@ -46,7 +46,7 @@ var LocationsFactory = {
                 },
                 signature_method: 'HMAC-SHA1'
             }),
-            callbackName = 'yelp_callback_'+(c+placeId).replace(/[^0-9A-Za-z_]/g,'_'), // a valid jsonp callback name
+            callbackName = 'yelp_callback_'+(c+placeId+'').replace(/[^0-9A-Za-z_]/g,'_'), // a valid jsonp callback name
             request = {                 // parameters of the request
                 url: 'http://api.yelp.com/v2/search',
                 method: 'GET',
@@ -113,7 +113,7 @@ var LocationsFactory = {
                 near: placeLocation,
                 limit: 1
             },
-            callbackName = 'foursquare_callback_'+(c+placeId).replace(/[^0-9A-Za-z_]/g,'_');  // a valid jsonp callback name
+            callbackName = 'foursquare_callback_'+(c+placeId+'').replace(/[^0-9A-Za-z_]/g,'_');  // a valid jsonp callback name
         // Create a timeout of 10 seconds to destroy the callback function
         // and execute the callbackError
         var timeout = setTimeout(function(){

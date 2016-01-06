@@ -10,7 +10,7 @@
     </head>
     <body>
         <!-- Preloader -->
-        <div id="loader-container"></div>
+        <div data-bind="visible: !hidePreloader" id="loader-container"></div>
         <!-- /Preloader -->
         <div class="mdl-layout mdl-js-layout mdl-layout--fixed-drawer
             mdl-layout--fixed-header">
@@ -43,13 +43,13 @@
                     </div>
                 </form>
                 <nav class="mdl-navigation" data-bind="foreach: {data: filteredLocations, as: 'loc'}">
-                    <div class="mdl-navigation__link" data-bind="click: $parent.selectListItem, attr: {id: 'LL_'+loc.google.place_id}">
+                    <div class="mdl-navigation__link" data-bind="click: $parent.clickListItem, css: { active: $parent.selectedMarkerId() === loc.id}">
                         <div class="inner">
-                            <img data-bind="attr: {src: ((typeof(loc.google.photos)!=='undefined' && loc.google.photos.length > 0) ? loc.google.photos[0].getUrl40 : loc.google.icon), alt: loc.google.name+'\'s photo' }" class="avatar" />
+                            <img data-bind="attr: {src: loc.google.photo_small, alt: loc.google.name+'\'s photo' }" class="avatar" />
                             <div class="list-item-text">
                                 <h5 data-bind="text: loc.google.name"></h5>
                                 <p data-bind="text: loc.google.vicinity"></p>
-                                <p>Google rating: <span data-bind="if: typeof(google.rating)!=='undefined'"><strong data-bind="text: loc.google.rating + ' / 5.0'"></strong></span><span data-bind="ifnot: loc.google.rating !== null">N/A</span></p>
+                                <p>Google rating: <strong data-bind="text: loc.google.rating"></strong></p>
                             </div>
                         </div>
                     </div>
@@ -57,19 +57,9 @@
             </div>
             <main class="mdl-layout__content mapContainer">
                 <div class="page-content">
-                    <template is="dom-bind" id="locationsMap" data-bind="polymerBind:{property:'locations', propertyValue:filteredLocations}">
-                        <google-map id="locationsMapElement" drag-events min-zoom="8" zoom="12" language="en">
-                            <template is="dom-repeat" items="{{locations}}" as="marker" observe="google.place_id">
-                                <google-map-marker
-                                    mouse-events
-                                    click-events
-                                    id="MM_{{marker.google.place_id}}"
-                                    latitude="{{marker.google.geometry.location.latNum}}"
-                                    longitude="{{marker.google.geometry.location.lngNum}}"
-                                    title="{{marker.google.name}}"></google-map-marker>
-                            </template>
-                        </google-map>
-                    </template>
+                    <div id="google-map-container">
+                        <div id="google-map"></div>
+                    </div>
                 </div>
             </main>
         </div>
@@ -77,10 +67,10 @@
             <div id="infowindow">
                 <div data-bind="if: selectedMarkerId() !== null">
                     <div data-bind="with: getSelItem()" >
-                        <img data-bind="attr: {src: ((typeof(google.photos)!=='undefined' && google.photos.length > 0) ? google.photos[0].getUrl280 : google.icon), alt: google.name+'\'s photo' }" class="img-iw"/>
+                        <img data-bind="attr: {src: google.photo_small, alt: google.name + '\'s photo' }" class="img-iw"/>
                         <h5 data-bind="text: google.name"></h5>
                         <div class="md-padding">
-                            Open now: <strong data-bind="text: (typeof(google.opening_hours)!=='undefined' && google.opening_hours.open_now) ? 'Yes': 'No'"></strong>
+                            Open now: <strong data-bind="text: google.open_now"></strong>
                         </div>
                         <div class="md-padding no-padding-top">
                             Categories:
@@ -89,17 +79,19 @@
                             </div>
                         </div>
                         <div class="md-padding no-padding-top no-padding-bottom">
-                            Google rating: <span data-bind="if: typeof(google.rating)!=='undefined'"><strong data-bind="text: google.rating + ' / 5.0'"></strong></span><span data-bind="ifnot: google.rating !== null">N/A</span>
+                            Google rating: <strong data-bind="text: google.rating"></strong>
                         </div>
                         <div class="md-padding no-padding-top no-padding-bottom" >
                             <h6>Yelp info</h6>
                             <div data-bind="if: yelp === null" ><em>N/A</em></div>
                             <div data-bind="ifnot: yelp === null" >
-                                Rating: <strong data-bind="text: yelp.rating + ' / 5.0'"></strong> from <strong data-bind="text: yelp.review_count"></strong> reviews.
-                                <div>
-                                    <a data-bind="attr: {href: yelp.url}"
-                                        title="Open this location in Yelp.com in a new window"
-                                        target="_blank">Open in Yelp.com</a>
+                                <div data-bind="with: yelp">
+                                    Rating: <strong data-bind="text: rating "></strong> from <strong data-bind="text: review_count"></strong> reviews.
+                                    <div>
+                                        <a data-bind="attr: {href: url}"
+                                            title="Open this location in Yelp.com in a new window"
+                                            target="_blank">Open in Yelp.com</a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -107,22 +99,24 @@
                             <h6>Foursquare info</h6>
                             <div data-bind="if: foursquare === null" ><em>N/A</em></div>
                             <div data-bind="ifnot: foursquare === null" >
-                                <strong data-bind="text: foursquare.stats.checkinsCount"></strong> checkins with<br/>
-                                <strong data-bind="text: foursquare.stats.tipCount"></strong> tips and reviews<br/><br/>
-                                <div data-bind="if: foursquare.specials.count > 0">
-                                    <strong>Special:</strong>
-                                    <p data-bind="text: foursquare.specials.items[0].message"></p>
-                                </div>
-                                <div data-bind="if: foursquare.hasMenu">
-                                    <strong>Menu:</strong>&nbsp;<a data-bind="attr:{href:'https://foursquare.com/v/'+foursquare.id+'/menu'}"
-                                        title="Open the location's menu in Foursquare.com in a new window"
-                                        target="_blank">View menu</a>
-                                    <br/><br/>
-                                </div>
-                                <div>
-                                    <a data-bind="attr:{href:'https://foursquare.com/v/'+foursquare.id}"
-                                        title="Open this location in Foursquare.com in a new window"
-                                        target="_blank">Open in Foursquare.com</a>
+                                <div data-bind="with: foursquare">
+                                    <strong data-bind="text: checkinsCount"></strong> checkins with<br/>
+                                    <strong data-bind="text: tipCount"></strong> tips and reviews<br/><br/>
+                                    <div data-bind="if: hasSpecial">
+                                        <strong>Special:</strong>
+                                        <p data-bind="text: specialMsg"></p>
+                                    </div>
+                                    <div data-bind="if: hasMenu">
+                                        <strong>Menu:</strong>&nbsp;<a data-bind="attr:{href:url+'/menu'}"
+                                            title="Open the location's menu in Foursquare.com in a new window"
+                                            target="_blank">View menu</a>
+                                        <br/><br/>
+                                    </div>
+                                    <div>
+                                        <a data-bind="attr:{href:url}"
+                                            title="Open this location in Foursquare.com in a new window"
+                                            target="_blank">Open in Foursquare.com</a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -140,6 +134,7 @@
         <!-- build:css(.tmp) styles/main.css -->
         <link rel="stylesheet" href="styles/main.css">
         <!-- endbuild -->
+
         <!-- build:js scripts/vendor/modernizr.js -->
         <script src="/bower_components/modernizr/modernizr.js"></script>
         <!-- endbuild -->
@@ -148,15 +143,10 @@
         <!-- bower:js -->
         <script src="/bower_components/jquery/dist/jquery.js"></script>
         <script src="/bower_components/knockout/dist/knockout.js"></script>
-        <script src="/bower_components/webcomponentsjs/webcomponents.js"></script>
         <script src="/bower_components/material-design-lite/material.min.js"></script>
         <script src="/bower_components/lodash/lodash.js"></script>
         <!-- endbower -->
         <!-- endbuild -->
-
-        <link rel="import" href="bower_components/google-map/google-map.html">
-        <link rel="import" href="bower_components/google-map/google-map-marker.html">
-        <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 
         <!-- build:js scripts/main.js -->
         <script src="scripts/vendor/json2.js"></script>
@@ -167,11 +157,12 @@
         <script src="scripts/vendor/sha1.js"></script>
         <script src="scripts/vendor/sha256.js"></script>
         <script src="scripts/vendor/oauth-1.0a.js"></script>
-        <script src="scripts/koPolymerHandler.js"></script>
         <script src="scripts/LocationsFactory.js"></script>
         <script src="scripts/LocationsModel.js"></script>
         <script src="scripts/LocationsViewModel.js"></script>
-        <script src="scripts/preloader.js"></script>
         <!-- endbuild -->
+
+        <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+        <script async defer src="https://maps.googleapis.com/maps/api/js?callback=initApp&libraries=places"></script>
     </body>
 </html>
