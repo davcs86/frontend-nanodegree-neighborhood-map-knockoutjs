@@ -14,7 +14,7 @@ var LocationsViewModel = function() {
      * - filterByVicinity: boolean binded to the checkbox filter by address
      * - visibleLocations: array of locations returned by google places api
      **/
-    vm.selectedMarkerId = ko.observable(false);
+    vm.selectedMarkerId = ko.observable(null).extend({ notify: 'always'});
     vm.filterQuery = ko.observable('');
     vm.filterByName = ko.observable(true);
     vm.filterByVicinity = ko.observable(false);
@@ -26,23 +26,22 @@ var LocationsViewModel = function() {
      * @param {string} place_id - Google Places API identifier
      */
     vm.getLocItem = function(place_id){
-        return LocationsModel.items[place_id];
+        var item = LocationsModel.items[place_id];
+        return (_.isUndefined(item)) ? false : item;
     }
     /**
      * Returns the current selected item (it's calculated because needs to detect
      * any change and update the infowindow)
      */
-    vm.getSelItem = ko.computed(function() {
-        var n = vm.selectedMarkerId(),
-            item = vm.getLocItem(n);
-        return item;
-    });
+    vm.getSelItem = ko.pureComputed(function() {
+        return vm.getLocItem(vm.selectedMarkerId());
+    }, vm).extend({ notify: 'always'});
     /**
      * Filter the visibleLocations array based on the query from the input
      * also by name and/or by address.
      * It's calculated becuase needs to update the listview and the markers.
      */
-    vm.filteredLocations = ko.computed(function() {
+    vm.filteredLocations = ko.pureComputed(function() {
         var resolved = [];
         _.forEach(vm.visibleLocations(), function(n){
             var item = vm.getLocItem(n);
@@ -58,7 +57,7 @@ var LocationsViewModel = function() {
             }
         });
         return resolved;
-    });
+    }, vm);
     /**
      * For each result returned by the Google Places API, store it in the vm.mapLocations
      * variable to make it usable by the listview and the map markers.
@@ -171,6 +170,10 @@ var LocationsViewModel = function() {
             content: $('#infowindow')[0],
             maxWidth: 220
         });
+        // Sets the close event listener for the infowindow
+        google.maps.event.addListener(vm.infowindow, 'closeclick', function() {
+            vm.selectItem(null);
+        });
         /**
          * Waits 2s before load the locations (tries to ensure that functions like map.getCenter() and map.getBounds() return a value)
          */
@@ -216,6 +219,8 @@ var LocationsViewModel = function() {
      */
     vm.selectItem = function(place_id) {
         vm.selectedMarkerId(place_id);
+        console.log(place_id);
+        vm.getSelItem(); // try to update it
         // remove .selected from the list items
         $('div[id^=LL_]').removeClass('active');
         // stop all the animations
@@ -230,13 +235,11 @@ var LocationsViewModel = function() {
             if (!_.isUndefined(markerDOM)){
                 markerDOM.set('animation','BOUNCE');
                 // open infowindow attached to the selected marker
+                vm.infowindow.setContent($('#infowindow').html());
                 vm.infowindow.open(vm.map, markerDOM.marker);
             }
             // in case the sidenav is open in a small screen, simulate a click on the darker area.
             $('.mdl-layout__obfuscator.is-visible').click();
-        } else {
-            // close infowindow
-            vm.infowindow.close();
         }
     }
     /**
@@ -259,11 +262,6 @@ jQuery(function($){
     $('body').on('google-map-marker-click','*', function(ev) {
         // when user clicks on the map's markers.
         koLVM.selectItem(this.id.replace('MM_',''));
-        ev.stopPropagation();
-    });
-    $('body').on('google-map-marker-close','*', function(ev) {
-        // De-select the marker when the infowindow is closed.
-        koLVM.selectItem(null);
         ev.stopPropagation();
     });
     $(document).ajaxSend(function( event, jqxhr, settings ) {

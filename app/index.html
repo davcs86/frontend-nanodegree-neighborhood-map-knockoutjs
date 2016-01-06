@@ -49,7 +49,7 @@
                             <div class="list-item-text">
                                 <h5 data-bind="text: loc.google.name"></h5>
                                 <p data-bind="text: loc.google.vicinity"></p>
-                                <p>Google rating: <span data-bind="if: google.rating !== null"><strong data-bind="text: loc.google.rating + ' / 5.0'"></strong></span><span data-bind="ifnot: loc.google.rating !== null">N/A</span></p>
+                                <p>Google rating: <span data-bind="if: typeof(google.rating)!=='undefined'"><strong data-bind="text: loc.google.rating + ' / 5.0'"></strong></span><span data-bind="ifnot: loc.google.rating !== null">N/A</span></p>
                             </div>
                         </div>
                     </div>
@@ -74,53 +74,57 @@
             </main>
         </div>
         <div class="hidden">
-            <div id="infowindow" data-bind="with: getSelItem" >
-                <img data-bind="attr: {src: ((typeof(google.photos)!=='undefined' && google.photos.length > 0) ? google.photos[0].getUrl280 : google.icon), alt: google.name+'\'s photo' }" class="img-iw"/>
-                <h5 data-bind="text: google.name"></h5>
-                <div class="md-padding">
-                    Open now: <strong data-bind="text: (google.opening_hours !== null && google.opening_hours.open_now) ? 'Yes': 'No'"></strong>
-                </div>
-                <div class="md-padding no-padding-top">
-                    Categories:
-                    <div class="my-chips-container" data-bind="foreach: { data: google.types, as: 'placeType' }">
-                        <span class="my-chips" data-bind="text: placeType"></span>
-                    </div>
-                </div>
-                <div class="md-padding no-padding-top no-padding-bottom">
-                    Google rating: <span data-bind="if: google.rating !== null"><strong data-bind="text: google.rating + ' / 5.0'"></strong></span><span data-bind="ifnot: google.rating !== null">N/A</span>
-                </div>
-                <div class="md-padding no-padding-top no-padding-bottom" >
-                    <h6>Yelp info</h6>
-                    <div data-bind="if: yelp === null" ><em>N/A</em></div>
-                    <div data-bind="ifnot: yelp === null" >
-                        Rating: <strong data-bind="text: yelp.rating + ' / 5.0'"></strong> from <strong data-bind="text: yelp.review_count"></strong> reviews.
-                        <div>
-                            <a data-bind="attr: {href: yelp.url}"
-                                title="Open this location in Yelp.com in a new window"
-                                target="_blank">Open in Yelp.com</a>
+            <div id="infowindow">
+                <div data-bind="if: selectedMarkerId() !== null">
+                    <div data-bind="with: getSelItem()" >
+                        <img data-bind="attr: {src: ((typeof(google.photos)!=='undefined' && google.photos.length > 0) ? google.photos[0].getUrl280 : google.icon), alt: google.name+'\'s photo' }" class="img-iw"/>
+                        <h5 data-bind="text: google.name"></h5>
+                        <div class="md-padding">
+                            Open now: <strong data-bind="text: (typeof(google.opening_hours)!=='undefined' && google.opening_hours.open_now) ? 'Yes': 'No'"></strong>
                         </div>
-                    </div>
-                </div>
-                <div class="md-padding no-padding-top" >
-                    <h6>Foursquare info</h6>
-                    <div data-bind="if: foursquare === null" ><em>N/A</em></div>
-                    <div data-bind="ifnot: foursquare === null" >
-                        <strong data-bind="text: foursquare.stats.checkinsCount"></strong> checkins with<br/>
-                        <strong data-bind="text: foursquare.stats.tipCount"></strong> tips and reviews<br/><br/>
-                        <div data-bind="if: foursquare.specials.count > 0">
-                            <strong>Special:</strong>
-                            <p data-bind="text: foursquare.specials.items[0].message"></p>
+                        <div class="md-padding no-padding-top">
+                            Categories:
+                            <div class="my-chips-container" data-bind="foreach: { data: google.types, as: 'placeType' }">
+                                <span class="my-chips" data-bind="text: placeType"></span>
+                            </div>
                         </div>
-                        <div data-bind="if: foursquare.hasMenu">
-                            <strong>Menu:</strong>&nbsp;<a data-bind="attr:{href:'https://foursquare.com/v/'+foursquare.id+'/menu'}"
-                                title="Open the location's menu in Foursquare.com in a new window"
-                                target="_blank">View menu</a>
-                            <br/><br/>
+                        <div class="md-padding no-padding-top no-padding-bottom">
+                            Google rating: <span data-bind="if: typeof(google.rating)!=='undefined'"><strong data-bind="text: google.rating + ' / 5.0'"></strong></span><span data-bind="ifnot: google.rating !== null">N/A</span>
                         </div>
-                        <div>
-                            <a data-bind="attr:{href:'https://foursquare.com/v/'+foursquare.id}"
-                                title="Open this location in Foursquare.com in a new window"
-                                target="_blank">Open in Foursquare.com</a>
+                        <div class="md-padding no-padding-top no-padding-bottom" >
+                            <h6>Yelp info</h6>
+                            <div data-bind="if: yelp === null" ><em>N/A</em></div>
+                            <div data-bind="ifnot: yelp === null" >
+                                Rating: <strong data-bind="text: yelp.rating + ' / 5.0'"></strong> from <strong data-bind="text: yelp.review_count"></strong> reviews.
+                                <div>
+                                    <a data-bind="attr: {href: yelp.url}"
+                                        title="Open this location in Yelp.com in a new window"
+                                        target="_blank">Open in Yelp.com</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="md-padding no-padding-top" >
+                            <h6>Foursquare info</h6>
+                            <div data-bind="if: foursquare === null" ><em>N/A</em></div>
+                            <div data-bind="ifnot: foursquare === null" >
+                                <strong data-bind="text: foursquare.stats.checkinsCount"></strong> checkins with<br/>
+                                <strong data-bind="text: foursquare.stats.tipCount"></strong> tips and reviews<br/><br/>
+                                <div data-bind="if: foursquare.specials.count > 0">
+                                    <strong>Special:</strong>
+                                    <p data-bind="text: foursquare.specials.items[0].message"></p>
+                                </div>
+                                <div data-bind="if: foursquare.hasMenu">
+                                    <strong>Menu:</strong>&nbsp;<a data-bind="attr:{href:'https://foursquare.com/v/'+foursquare.id+'/menu'}"
+                                        title="Open the location's menu in Foursquare.com in a new window"
+                                        target="_blank">View menu</a>
+                                    <br/><br/>
+                                </div>
+                                <div>
+                                    <a data-bind="attr:{href:'https://foursquare.com/v/'+foursquare.id}"
+                                        title="Open this location in Foursquare.com in a new window"
+                                        target="_blank">Open in Foursquare.com</a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
