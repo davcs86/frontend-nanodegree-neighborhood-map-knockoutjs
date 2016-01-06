@@ -219,7 +219,7 @@ var LocationsViewModel = function() {
      */
     vm.selectItem = function(place_id) {
         vm.selectedMarkerId(place_id);
-        console.log(place_id);
+        //console.log(place_id);
         vm.getSelItem(); // try to update it
         // remove .selected from the list items
         $('div[id^=LL_]').removeClass('active');
