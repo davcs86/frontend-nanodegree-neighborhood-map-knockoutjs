@@ -213,6 +213,8 @@ module.exports = function (grunt) {
         // reference in your app
         modernizr: {
             dist: {
+                parseFiles: true,
+                customTests: [],
                 devFile: 'bower_components/modernizr/modernizr.js',
                 outputFile: '<%= config.dist %>/scripts/vendor/modernizr.js',
                 files: {
@@ -222,6 +224,14 @@ module.exports = function (grunt) {
                         '!<%= config.dist %>/scripts/vendor/*'
                     ]
                 },
+                tests: [
+                    'eventlistener',
+                    'pointerevents'
+                ],
+                options: [
+                    'html5shiv',
+                    'setClasses'
+                ],
                 uglify: true
             }
         },

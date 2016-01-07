@@ -1,6 +1,6 @@
 /*eslint no-unused-vars: [2, { "args": "all", "argsIgnorePattern": "n|jqxhr", "varsIgnorePattern": "LocationsViewModel|initApp" }]*/
 /*eslint-disable no-console */
-/*global LocationsModel,LocationsFactory,ko,google,_*/
+/*global LocationsModel,LocationsFactory,ko,google,_,Modernizr*/
 var LocationsViewModel = function() {
     var vm = this;
     vm.map = null;
@@ -115,8 +115,11 @@ var LocationsViewModel = function() {
             title: item.google.name
         });
         marker.set('id', item.id);
-        //marker.addListener('click', vm.clickMarker);
-        marker.addListener('mousedown', vm.clickMarker);
+        if (Modernizr.pointerevents) {
+            marker.addListener('mousedown', vm.clickMarker);
+        } else {
+            marker.addListener('click', vm.clickMarker);
+        }
         return marker;
     }
     /**
