@@ -47,7 +47,7 @@ var LocationsModel = {
     items: {},
     start: function() {
         var stored = store.get('FEND-P5_davcs86_KOjs');
-        LocationsModel.items = (_.isUndefined(stored) ?  hardcodedLocations : stored);
+        LocationsModel.items = (_.isUndefined(stored) ? hardcodedLocations : stored);
     },
     save : function() {
         store.set('FEND-P5_davcs86_KOjs', LocationsModel.items);

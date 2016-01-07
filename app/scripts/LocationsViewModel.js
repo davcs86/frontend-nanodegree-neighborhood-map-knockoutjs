@@ -115,7 +115,8 @@ var LocationsViewModel = function() {
             title: item.google.name
         });
         marker.set('id', item.id);
-        marker.addListener('click', vm.clickMarker);
+        //marker.addListener('click', vm.clickMarker);
+        marker.addListener('mousedown', vm.clickMarker);
         return marker;
     }
     /**
@@ -140,7 +141,7 @@ var LocationsViewModel = function() {
     vm.selectItem = function(place_id) {
         vm.selectedMarkerId(place_id);
         vm.getSelItem(); // try to update it
-        vm.selectedMarkerId();
+        //vm.selectedMarkerId();
         if (_.isString(place_id)){// && !_.indexOf(vm.visibleLocations,place_id)>=0) {
             _.forEach(vm.markers, function(n){
                 if (n.get('id')===place_id){
