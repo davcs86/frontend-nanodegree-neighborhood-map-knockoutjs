@@ -63,57 +63,60 @@
         </div>
         <div class="hidden">
             <div id="infowindow">
-                <div data-bind="if: selectedMarkerId() !== null">
-                    <div data-bind="with: getSelItem()" >
-                        <img data-bind="attr: {src: google.photo_small, alt: google.name + '\'s photo' }" class="img-iw"/>
-                        <h5 data-bind="text: google.name"></h5>
-                        <div class="md-padding">
-                            Open now: <strong data-bind="text: google.open_now"></strong>
-                        </div>
-                        <div class="md-padding no-padding-top">
-                            Categories:
-                            <div class="my-chips-container" data-bind="foreach: { data: google.types, as: 'placeType' }">
-                                <span class="my-chips" data-bind="text: placeType"></span>
+                <div id="infowindow-content">
+                    <div data-bind="if: selectedMarkerId() !== ''">
+                        <div data-bind="with: getSelItem()" >
+                            <img data-bind="attr: {src: google.photo_big, alt: google.name + '\'s photo' }" class="img-iw"/>
+                            <h5 data-bind="text: google.name"></h5>
+                            <div class="md-padding">
+                                Open now: <strong data-bind="text: google.open_now"></strong>
                             </div>
-                        </div>
-                        <div class="md-padding no-padding-top no-padding-bottom">
-                            Google rating: <strong data-bind="text: google.rating"></strong>
-                        </div>
-                        <div class="md-padding no-padding-top no-padding-bottom" >
-                            <h6>Yelp info</h6>
-                            <div data-bind="if: yelp === null" ><em>N/A</em></div>
-                            <div data-bind="ifnot: yelp === null" >
-                                <div data-bind="with: yelp">
-                                    Rating: <strong data-bind="text: rating "></strong> from <strong data-bind="text: review_count"></strong> reviews.
-                                    <div>
-                                        <a data-bind="attr: {href: url}"
-                                            title="Open this location in Yelp.com in a new window"
-                                            target="_blank">Open in Yelp.com</a>
+                            <div class="md-padding no-padding-top">
+                                Categories:
+                                <div class="my-chips-container" data-bind="foreach: { data: google.types, as: 'placeType' }">
+                                    <span class="my-chips" data-bind="text: placeType"></span>
+                                </div>
+                            </div>
+                            <div class="md-padding no-padding-top no-padding-bottom">
+                                Google rating: <strong data-bind="text: google.rating"></strong>
+                            </div>
+                            <div class="md-padding no-padding-top no-padding-bottom" >
+                                <h6>Yelp info</h6>
+                                <div data-bind="if: yelp === null" ><em>N/A</em></div>
+                                <div data-bind="ifnot: yelp === null" >
+                                    <div data-bind="with: yelp">
+                                        Rating: <strong data-bind="text: rating "></strong> from <strong data-bind="text: review_count"></strong> reviews.
+                                        <div>
+                                            <a data-bind="attr: {href: url}"
+                                                title="Open this location in Yelp.com in a new window"
+                                                target="_blank">Open in Yelp.com</a>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="md-padding no-padding-top" >
-                            <h6>Foursquare info</h6>
-                            <div data-bind="if: foursquare === null" ><em>N/A</em></div>
-                            <div data-bind="ifnot: foursquare === null" >
-                                <div data-bind="with: foursquare">
-                                    <strong data-bind="text: checkinsCount"></strong> checkins with<br/>
-                                    <strong data-bind="text: tipCount"></strong> tips and reviews<br/><br/>
-                                    <div data-bind="if: hasSpecial">
-                                        <strong>Special:</strong>
-                                        <p data-bind="text: specialMsg"></p>
-                                    </div>
-                                    <div data-bind="if: hasMenu">
-                                        <strong>Menu:</strong>&nbsp;<a data-bind="attr:{href:url+'/menu'}"
-                                            title="Open the location's menu in Foursquare.com in a new window"
-                                            target="_blank">View menu</a>
-                                        <br/><br/>
-                                    </div>
-                                    <div>
-                                        <a data-bind="attr:{href:url}"
-                                            title="Open this location in Foursquare.com in a new window"
-                                            target="_blank">Open in Foursquare.com</a>
+                            <div class="md-padding no-padding-top" >
+                                <h6>Foursquare info</h6>
+                                <div data-bind="if: foursquare === null" ><em>N/A</em></div>
+                                <div data-bind="ifnot: foursquare === null" >
+                                    <div data-bind="with: foursquare">
+                                        <p>
+                                            <strong data-bind="text: checkinsCount"></strong> checkins with<br/>
+                                            <strong data-bind="text: tipCount"></strong> tips and reviews
+                                        </p>
+                                        <div data-bind="if: hasSpecial">
+                                            <strong>Special:</strong>
+                                            <p data-bind="text: specialMsg"></p>
+                                        </div>
+                                        <div data-bind="if: hasMenu">
+                                            <p><strong>Menu:</strong>&nbsp;<a data-bind="attr:{href:url+'/menu'}"
+                                                title="Open the location's menu in Foursquare.com in a new window"
+                                                target="_blank">View menu</a></p>
+                                        </div>
+                                        <div>
+                                            <a data-bind="attr:{href:url}"
+                                                title="Open this location in Foursquare.com in a new window"
+                                                target="_blank">Open in Foursquare.com</a>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

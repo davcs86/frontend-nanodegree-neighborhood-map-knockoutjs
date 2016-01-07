@@ -1,6 +1,6 @@
 /*eslint no-unused-vars: [2, { "args": "all", "argsIgnorePattern": "n|jqxhr", "varsIgnorePattern": "LocationsViewModel|initApp" }]*/
 /*eslint-disable no-console */
-/*global LocationsModel,LocationsFactory,ko,google,_,Modernizr*/
+/*global LocationsModel,LocationsFactory,ko,google,_,Modernizr,$*/
 var LocationsViewModel = function() {
     var vm = this;
     vm.map = null;
@@ -27,7 +27,7 @@ var LocationsViewModel = function() {
         vm.infowindow = new google.maps.InfoWindow({maxWidth: 220});
         // Sets the close event listener for the infowindow
         google.maps.event.addListener(vm.infowindow, 'closeclick', function() {
-            vm.selectItem(null);
+            vm.selectItem('');
         });
         /**
          * Waits 1s before load the locations (tries to ensure that functions like map.getCenter() and map.getBounds() return a value)
@@ -36,7 +36,7 @@ var LocationsViewModel = function() {
             // update the locations
             vm.updateLocations();
         }, 1000);
-    }
+    };
     // Array of markers in the map
     vm.markers = [];
     /**
@@ -47,7 +47,7 @@ var LocationsViewModel = function() {
      * - filterByVicinity: boolean binded to the checkbox filter by address
      * - visibleLocations: array of locations returned by google places api
      **/
-    vm.selectedMarkerId = ko.observable(null).extend({ notify: 'always'});
+    vm.selectedMarkerId = ko.observable('').extend({ notify: 'always'});
     vm.filterQuery = ko.observable('');
     vm.filterByName = ko.observable(true);
     vm.filterByVicinity = ko.observable(false);
@@ -60,7 +60,7 @@ var LocationsViewModel = function() {
     vm.getLocItem = function(place_id){
         var item = LocationsModel.items[place_id];
         return (_.isUndefined(item)) ? false : item;
-    }
+    };
     /**
      * Returns the current selected item (it's calculated because needs to detect
      * any change and update the infowindow)
@@ -104,7 +104,7 @@ var LocationsViewModel = function() {
             vm.markers.push(vm.createMarker(n));
         });
         return filteredLocations;
-    }
+    };
     /**
      * Create a marker in the map
      */
@@ -121,20 +121,20 @@ var LocationsViewModel = function() {
             marker.addListener('click', vm.clickMarker);
         }
         return marker;
-    }
+    };
     /**
      * Click marker event listener
      */
     vm.clickMarker = function(){
         /// do whatever
         vm.selectItem(this.get('id'));
-    }
+    };
     /**
      * Handles the click over a list item.
      */
     vm.clickListItem = function(data){
         vm.selectItem(data.id);
-    }
+    };
      /**
       * Select (saves its identifier) the marker of a item,
       * sets the marker animation and if apply, open/hide the
@@ -144,23 +144,24 @@ var LocationsViewModel = function() {
     vm.selectItem = function(place_id) {
         vm.selectedMarkerId(place_id);
         vm.getSelItem(); // try to update it
-        //vm.selectedMarkerId();
-        if (_.isString(place_id)){// && !_.indexOf(vm.visibleLocations,place_id)>=0) {
+        if (_.isString(place_id)){
             _.forEach(vm.markers, function(n){
                 if (n.get('id')===place_id){
-                    n.setAnimation('BOUNCE');
+                    n.setAnimation(google.maps.Animation.BOUNCE);
                     // open infowindow attached to this marker
                     vm.infowindow.setContent(document.getElementById('infowindow').innerHTML);
                     vm.infowindow.open(vm.map, n);
+                    n.setIcon('images/arrow.png');
                 } else {
                     // stop all other markers' animations
                     n.setAnimation(null);
+                    n.setIcon('https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi.png');
                 }
             });
             // in case the sidenav is open in a small screen, simulate a click on the darker area to hide it.
             $('.mdl-layout__obfuscator.is-visible').click();
         }
-    }
+    };
     /**
      * For each result returned by the Google Places API, store it in the vm.mapLocations
      * variable to make it usable by the listview and the map markers.
@@ -182,7 +183,7 @@ var LocationsViewModel = function() {
                     google: vm.extractGoogleResult(n),
                     yelp: null,
                     foursquare: null
-                }
+                };
             // store the place_id of this result
             locations.push(place_id);
             if (_.isUndefined(LocationsModel.items[place_id])) {
@@ -217,7 +218,7 @@ var LocationsViewModel = function() {
         vm.visibleLocations(locations);
         // Save the cache to localStorage
         LocationsModel.save();
-    }
+    };
     /**
      * Extract only the necessary data from google API
      */
@@ -250,7 +251,7 @@ var LocationsViewModel = function() {
             data.rating = item.rating + ' / 5.0';
         }
         return data;
-    }
+    };
     /**
      * If Yelp API returned a value, store it in cache (vm.allLocations)
      * @param {string} place_id - Google Places API identifier
@@ -264,7 +265,7 @@ var LocationsViewModel = function() {
             // Save the cache to localStorage
             LocationsModel.save();
         }
-    }
+    };
     /**
      * Extract only the necessary data from Yelp API
      */
@@ -275,7 +276,7 @@ var LocationsViewModel = function() {
             url: item.url
         };
         return data;
-    }
+    };
     /**
      * If Foursquare API returned a value, store it in cache (vm.allLocations)
      * @param {string} place_id - Google Places API identifier
@@ -289,7 +290,7 @@ var LocationsViewModel = function() {
             // Save the cache to localStorage
             LocationsModel.save();
         }
-    }
+    };
     /**
      * Extract only the necessary data from Foursquare API
      */
@@ -308,7 +309,7 @@ var LocationsViewModel = function() {
             data.specialMsg = item.specials.items[0].message;
         }
         return data;
-    }
+    };
     /**
      * Load the locations from Google Places API, or from the cache when API fails.
      */
@@ -328,7 +329,7 @@ var LocationsViewModel = function() {
             // Load the locations from the cache (LocationsModel.items)
             vm.loadAllLocations();
         }
-    }
+    };
     /**
      * Load the locations from cache (LocationsModel.items).
      */
@@ -338,7 +339,7 @@ var LocationsViewModel = function() {
             locations.push(key);
         });
         vm.visibleLocations(locations);
-    }
+    };
 
     // Waits for hide the preloader by KO
     // google maps has problems when is rendered in hidden state

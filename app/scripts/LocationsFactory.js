@@ -12,7 +12,7 @@ var LocationsFactory = {
         var request = {
                 location: map.getCenter(),
                 bounds: bounds,
-                types: ['food'] // search for food places
+                types: ['restaurant'] // search for food places
             },
             service = new google.maps.places.PlacesService(map);
         service.nearbySearch(request, function(results, status) {
@@ -35,7 +35,7 @@ var LocationsFactory = {
      * @param {string} placeLocLng - Longitude of the location
      * @param {string} placeLocation - City where the location is
      * @param {function} callbackSuccess - Callback to be executed when the request was succesful
-     * @param {function} callbackSuccess - Callback to be executed when the request failed
+     * @param {function} callbackError - Callback to be executed when the request failed
      */
     searchYelpBusiness: function(placeId, placeName, placeLocLat, placeLocLng, placeLocation, callbackSuccess, callbackError) {
         var c = (new Date()).getTime(), // milliseconds  to name the custom callback
@@ -100,7 +100,7 @@ var LocationsFactory = {
      * @param {string} placeLocLng - Longitude of the location
      * @param {string} placeLocation - City where the location is
      * @param {function} callbackSuccess - Callback to be executed when the request was succesful
-     * @param {function} callbackSuccess - Callback to be executed when the request failed
+     * @param {function} callbackError - Callback to be executed when the request failed
      */
     searchFoursquareBusiness: function(placeId, placeName, placeLocLat, placeLocLng, placeLocation, callbackSuccess, callbackError) {
         var c = (new Date()).getTime(), // milliseconds to name the custom callback
